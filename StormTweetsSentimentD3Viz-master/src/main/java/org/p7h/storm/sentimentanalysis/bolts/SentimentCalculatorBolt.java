@@ -25,102 +25,104 @@ import java.util.Map;
 import java.util.SortedMap;
 
 /**
- * Breaks each tweet into words and calculates the sentiment of each tweet and assocaites the sentiment value to the State
+ * Breaks each tweet into words and calculates the sentiment of each tweet and associates sentiment value to the State
  * and logs the same to the console and also logs to the file.
  *
  * @author - Prashanth Babu
  */
 public final class SentimentCalculatorBolt extends BaseRichBolt {
-	private static final Logger LOGGER = LoggerFactory.getLogger(SentimentCalculatorBolt.class);
-    private static final long serialVersionUID = 1942195527233725767L;
-    private OutputCollector _outputCollector;
+  private static final Logger LOGGER = LoggerFactory.getLogger(SentimentCalculatorBolt.class);
+  private static final long serialVersionUID = 1942195527233725767L;
+  private OutputCollector _outputCollector;
 
-	private SortedMap<String,Integer> afinnSentimentMap = null;
-	private SortedMap<String,Integer> stateSentimentMap = null;
+  private SortedMap<String,Integer> afinnSentimentMap = null;
+  private SortedMap<String,Integer> stateSentimentMap = null;
 
-	public SentimentCalculatorBolt(){
-	}
+  public SentimentCalculatorBolt() {}
 
-	@Override
-	public final void prepare(final Map map, final TopologyContext topologyContext,
-	                          final OutputCollector outputCollector) {
-		afinnSentimentMap = Maps.newTreeMap();
-		stateSentimentMap = Maps.newTreeMap();
-		this._outputCollector = outputCollector;
+  @Override
+  public final void prepare(final Map map, final TopologyContext topologyContext,
+                            final OutputCollector outputCollector) {
+    afinnSentimentMap = Maps.newTreeMap();
+    stateSentimentMap = Maps.newTreeMap();
+    this._outputCollector = outputCollector;
 
-		//Bolt will read the AFINN Sentiment file [which is in the classpath] and stores the key, value pairs to a Map.
-		try {
-			final URL url = Resources.getResource(Constants.AFINN_SENTIMENT_FILE_NAME);
-			final String text = Resources.toString(url, Charsets.UTF_8);
-			final Iterable<String> lineSplit = Splitter.on("\n").trimResults().omitEmptyStrings().split(text);
-			List<String> tabSplit;
-			for (final String str: lineSplit) {
-				tabSplit = Lists.newArrayList(Splitter.on("\t").trimResults().omitEmptyStrings().split(str));
-				afinnSentimentMap.put(tabSplit.get(0), Integer.parseInt(tabSplit.get(1)));
-			}
-		} catch (final IOException ioException) {
-			LOGGER.error(ioException.getMessage(), ioException);
-			ioException.printStackTrace();
-			//Should not occur. If it occurs, we cant continue. So, exiting at this point itself.
-			System.exit(1);
-		}
-	}
+    //Bolt will read the AFINN Sentiment file [which is in the classpath] and stores the key, value pairs to a Map.
+    try {
+      final URL url = Resources.getResource(Constants.AFINN_SENTIMENT_FILE_NAME);
+      final String text = Resources.toString(url, Charsets.UTF_8);
+      final Iterable<String> lineSplit = Splitter.on("\n").trimResults().omitEmptyStrings().split(text);
 
-	@Override
-	public final void declareOutputFields(final OutputFieldsDeclarer outputFieldsDeclarer) {
-		outputFieldsDeclarer.declare(new Fields("stateCode", "sentiment"));
-	}
+      List<String> tabSplit;
+      
+      for (final String str: lineSplit) {
+        tabSplit = Lists.newArrayList(Splitter.on("\t").trimResults().omitEmptyStrings().split(str));
+        afinnSentimentMap.put(tabSplit.get(0), Integer.parseInt(tabSplit.get(1)));
+      }
+    } catch (final IOException ioException) {
+      LOGGER.error(ioException.getMessage(), ioException);
+      ioException.printStackTrace();
+      //Should not occur. If it occurs, we cant continue. So, exiting at this point itself.
+      System.exit(1);
+    }
+  }
 
-	@Override
-	public final void execute(final Tuple input) {
-		final String state = (String) input.getValueByField("state");
-		final Status status = (Status) input.getValueByField("tweet");
-		final int sentimentOfCurrentTweet = getSentimentOfTweet(status);
-		Integer previousSentiment = stateSentimentMap.get(state);
-		previousSentiment = (null == previousSentiment) ? sentimentOfCurrentTweet : previousSentiment + sentimentOfCurrentTweet;
-		stateSentimentMap.put(state, previousSentiment);
-		//int stateId = Constants.MAP_STATE_CODE_ID.get(state);
-		_outputCollector.emit(new Values(state, previousSentiment));
-		LOGGER.info("{}:{}", state, previousSentiment);
-	}
+  @Override
+  public final void declareOutputFields(final OutputFieldsDeclarer outputFieldsDeclarer) {
+    outputFieldsDeclarer.declare(new Fields("stateCode", "sentiment"));
+  }
 
-	/**
-	 * Gets the sentiment of the current tweet.
-	 *
-	 * @param status -- Status Object.
-	 * @return sentiment of the current tweet.
-	 */
-	private final int getSentimentOfTweet(final Status status) {
-		//Remove all punctuation and new line chars in the tweet.
-		final String tweet = status.getText().replaceAll("\\p{Punct}|\\n", " ").toLowerCase();
-		//Splitting the tweet on empty space.
-		final Iterable<String> words = Splitter.on(' ')
-				                               .trimResults()
-				                               .omitEmptyStrings()
-				                               .split(tweet);
-		int sentimentOfCurrentTweet = 0;
-		//Loop thru all the wordsd and find the sentiment of this tweet.
-		for (final String word : words) {
-			if(afinnSentimentMap.containsKey(word)){
-				sentimentOfCurrentTweet += afinnSentimentMap.get(word);
-			}
-		}
-		//LOGGER.debug("Tweet : Sentiment {} ==> {}", tweet, sentimentOfCurrentTweet);
-		return sentimentOfCurrentTweet;
-	}
+  @Override
+  public final void execute(final Tuple input) {
+    final String state = (String) input.getValueByField("state");
+    final Status status = (Status) input.getValueByField("tweet");
+    final int sentimentOfCurrentTweet = getSentimentOfTweet(status);
+    
+    Integer previousSentiment = stateSentimentMap.get(state);
+    previousSentiment = (null == previousSentiment) ? sentimentOfCurrentTweet : previousSentiment + sentimentOfCurrentTweet;
+    stateSentimentMap.put(state, previousSentiment);
+    _outputCollector.emit(new Values(state, previousSentiment));
+    LOGGER.info("{}:{}", state, previousSentiment);
+  }
 
-	//Ideally we should be knocking off the URLs from the tweet since they don't need to parsed.
-	private String filterOutURLFromTweet(final Status status) {
-		final String tweet = status.getText();
-		final URLEntity[] urlEntities = status.getURLEntities();
-		int startOfURL;
-		int endOfURL;
-		String truncatedTweet = "";
-		for(final URLEntity urlEntity: urlEntities){
-			startOfURL = urlEntity.getStart();
-			endOfURL = urlEntity.getEnd();
-			truncatedTweet += tweet.substring(0, startOfURL) + tweet.substring(endOfURL);
-		}
-		return truncatedTweet;
-	}
+  /**
+   * Gets the sentiment of the current tweet.
+   *
+   * @param status -- Status Object.
+   * @return sentiment of the current tweet.
+   */
+  private final int getSentimentOfTweet(final Status status) {
+    //Remove all punctuation and new line chars in the tweet.
+    final String tweet = status.getText().replaceAll("\\p{Punct}|\\n", " ").toLowerCase();
+    //Splitting the tweet on empty space.
+    final Iterable<String> words = Splitter.on(' ')
+                                           .trimResults()
+                                           .omitEmptyStrings()
+                                           .split(tweet);
+    int sentimentOfCurrentTweet = 0;
+    //Loop thru all the wordsd and find the sentiment of this tweet.
+    for (final String word : words) {
+      if (afinnSentimentMap.containsKey(word)) {
+        sentimentOfCurrentTweet += afinnSentimentMap.get(word);
+      }
+    }
+    return sentimentOfCurrentTweet;
+  }
+
+  //Ideally we should be knocking off the URLs from the tweet since they don't need to parsed.
+  private String filterOutURLFromTweet(final Status status) {
+    final String tweet = status.getText();
+    final URLEntity[] urlEntities = status.getURLEntities();
+    
+    int startOfURL;
+    int endOfURL;
+    String truncatedTweet = "";
+    
+    for (final URLEntity urlEntity: urlEntities) {
+      startOfURL = urlEntity.getStart();
+      endOfURL = urlEntity.getEnd();
+      truncatedTweet += tweet.substring(0, startOfURL) + tweet.substring(endOfURL);
+    }
+    return truncatedTweet;
+  }
 }
