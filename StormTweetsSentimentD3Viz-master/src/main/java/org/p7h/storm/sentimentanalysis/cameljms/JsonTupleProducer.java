@@ -11,20 +11,19 @@ import javax.jms.TextMessage;
 
 @SuppressWarnings("serial")
 public class JsonTupleProducer implements JmsTupleProducer {
+  private static final long serialVersionUID = 5616085758921482593L;
 
-    private static final long serialVersionUID = 5616085758921482593L;
-
-    public Values toTuple(Message msg) throws JMSException {
-        if(msg instanceof TextMessage){
-            String json = ((TextMessage) msg).getText();
-            return new Values(json);
-        } else {
-            return null;
-        }
+  public Values toTuple(Message msg) throws JMSException {
+    if (msg instanceof TextMessage) {
+      String json = ((TextMessage) msg).getText();
+      return new Values(json);
+    } else {
+      return null;
     }
+  }
 
-    public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("json"));
-    }
+  public void declareOutputFields(OutputFieldsDeclarer declarer) {
+    declarer.declare(new Fields("json"));
+  }
 
 }
