@@ -21,9 +21,9 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Gets the location of a tweet and forwards the State code and the tweet to the next Bolt.
+ * Gets the location of a tweet and forwards the state code and the tweet to the next Bolt.
  * There are three different objects within a tweet that we can use to determine it’s origin.
- * This Class utilizes all the three of them and prioritizes in the following order [high to low]:
+ * This class utilizes all the three of them and prioritizes in the following order [high to low]:
  *  1. The coordinates object
  *  2. The place object
  *  3. The user object
@@ -31,11 +31,10 @@ import java.util.Properties;
  * @author - Prashanth Babu
  */
 public final class StateLocatorBolt extends BaseRichBolt {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(StateLocatorBolt.class);
   private static final long serialVersionUID = -8097813984907419942L;
   private OutputCollector _outputCollector;
-
-  public StateLocatorBolt() {}
 
   @Override
   public final void prepare(final Map map, final TopologyContext topologyContext,
@@ -46,15 +45,13 @@ public final class StateLocatorBolt extends BaseRichBolt {
     try {
       properties.load(StateLocatorBolt.class.getClassLoader().getResourceAsStream(Constants.CONFIG_PROPERTIES_FILE));
     } catch (final IOException ioException) {
-      //Should not occur. If it does, we cant continue. So exiting the program!
+      //Should not occur. If it does, we can't continue. So exiting the program!
       LOGGER.error(ioException.getMessage(), ioException);
       System.exit(1);
     }
     /*
      * Bolt reads the Bing Maps API Value and stores the same to BING_MAPS_API_KEY_VALUE of Constants.java
      * so that the Bolt can use it.
-     * For the lack of time I am using this Constant or else using a good Design Pattern, this can be fine-tuned.
-     * For Bing Maps Key: https://www.bingmapsportal.com
      */
     Constants.BING_MAPS_API_KEY_VALUE = properties.getProperty(Constants.BING_MAPS_API_KEY);
   }
@@ -79,10 +76,10 @@ public final class StateLocatorBolt extends BaseRichBolt {
   }
 
   /**
-   * Tries to get the State of the tweet by checking first GeoLocation Object, then Place Object and finally User Object.
+   * Tries to get the state of the tweet by checking first GeoLocation Object, then Place Object and finally User Object.
    *
-   * @param status -- Status Object.
-   * @return State of the Tweet.
+   * @param status -- Status Object
+   * @return State of the tweet
    */
   private final Optional<String> getStateFromTweet(final Status status) {
     String state = getStateFromTweetGeoLocation(status);
@@ -97,11 +94,11 @@ public final class StateLocatorBolt extends BaseRichBolt {
   }
 
   /**
-   * Retrieves the State from User Object of the Tweet.
+   * Retrieves the state from User Object of the tweet.
    *
-   * @param status -- Status Object.
-   * @param state -- Current State.
-   * @return State of tweet.
+   * @param status -- Status Object
+   * @param state -- Current state
+   * @return State of tweet
    */
   private final String getStateFromTweetUserObject(final Status status, String state) {
     String stateFromUserObject = status.getUser().getLocation();
@@ -124,11 +121,11 @@ public final class StateLocatorBolt extends BaseRichBolt {
   }
 
   /**
-   * Retrieves the State from Place Object of the Tweet.
+   * Retrieves the state from Place Object of the Tweet.
    *
-   * @param status -- Status Object.
-   * @param state -- Current State.
-   * @return State of tweet.
+   * @param status -- Status Object
+   * @param state -- Current state
+   * @return State of tweet
    */
   private final String getStateFromTweetPlaceObject(final Status status, String state) {
     final Place place = status.getPlace();
@@ -147,11 +144,11 @@ public final class StateLocatorBolt extends BaseRichBolt {
 
   /**
    * Retrieves the State from GeoLocation Object of the Tweet.
-   * This is considered as the primary and correct value for the State of the tweet.
+   * This is considered as the primary and correct value for the state of the tweet.
    * Can also try: http://www.fcc.gov/developers/census-block-conversions-api
    *
-   * @param status -- Status Object.
-   * @return State of tweet.
+   * @param status -- Status Object
+   * @return State of tweet
    */
   private final String getStateFromTweetGeoLocation(final Status status) {
     String state = null;

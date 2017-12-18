@@ -12,12 +12,18 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Util class for BingMaps requests.
+ */
 public final class BingMapsLookup {
   private static final Logger LOGGER = LoggerFactory.getLogger(BingMapsLookup.class);
   private static final String BING_MAPS_URL_START = "http://dev.virtualearth.net/REST/v1/Locations/";
   private static final String BING_MAPS_URL_MIDDLE_JSON = "?o=json&key=";
 
-  //Dummy and temporary method for Unit testing Bing Maps API.
+  /**
+   * Dummy and temporary method for Unit testing Bing Maps API.
+   * @param args
+   */
   public static void main(String[] args) {
     double latitude = 33.98067209;
     double longitude = -84.07507873;

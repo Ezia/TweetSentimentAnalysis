@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.SortedMap;
 
 /**
- * Breaks each tweet into words and calculates the sentiment of each tweet and associates sentiment value to the State
- * and logs the same to the console and also logs to the file.
+ * Breaks each tweet into words, calculates the sentiment of each tweet, associates sentiment value to the State,
+ * and logs the same to the console and the file.
  *
  * @author - Prashanth Babu
  */
@@ -35,10 +35,14 @@ public final class SentimentCalculatorBolt extends BaseRichBolt {
   private static final long serialVersionUID = 1942195527233725767L;
   private OutputCollector _outputCollector;
 
+  /**
+   * Contains the AFINN database
+   */
   private SortedMap<String,Integer> afinnSentimentMap = null;
+  /**
+   * Contains the current sentiment value of each state
+   */
   private SortedMap<String,Integer> stateSentimentMap = null;
-
-  public SentimentCalculatorBolt() {}
 
   @Override
   public final void prepare(final Map map, final TopologyContext topologyContext,
@@ -86,21 +90,21 @@ public final class SentimentCalculatorBolt extends BaseRichBolt {
   }
 
   /**
-   * Gets the sentiment of the current tweet.
+   * Gets the sentiment of the current tweet and affects it to the corresponding State.
    *
-   * @param status -- Status Object.
-   * @return sentiment of the current tweet.
+   * @param status -- Tweet Status
+   * @return The sentiment of the tweet
    */
   private final int getSentimentOfTweet(final Status status) {
-    //Remove all punctuation and new line chars in the tweet.
+    //Remove all punctuation and new line chars in the tweet
     final String tweet = status.getText().replaceAll("\\p{Punct}|\\n", " ").toLowerCase();
-    //Splitting the tweet on empty space.
+    //Splitting the tweet on empty space
     final Iterable<String> words = Splitter.on(' ')
                                            .trimResults()
                                            .omitEmptyStrings()
                                            .split(tweet);
     int sentimentOfCurrentTweet = 0;
-    //Loop thru all the wordsd and find the sentiment of this tweet.
+    //Loop through all the words and find the sentiment of this tweet.
     for (final String word : words) {
       if (afinnSentimentMap.containsKey(word)) {
         sentimentOfCurrentTweet += afinnSentimentMap.get(word);
@@ -109,7 +113,14 @@ public final class SentimentCalculatorBolt extends BaseRichBolt {
     return sentimentOfCurrentTweet;
   }
 
-  //Ideally we should be knocking off the URLs from the tweet since they don't need to parsed.
+  /**
+   * Filters URL of the tweet to retrieve the tweet text.
+   * <p>
+   * Ideally we should be knocking off the URLs from the tweet since they don't need to be parsed.
+   * @param status Status Objet
+   * @return The tweet message
+   */
+  //
   private String filterOutURLFromTweet(final Status status) {
     final String tweet = status.getText();
     final URLEntity[] urlEntities = status.getURLEntities();

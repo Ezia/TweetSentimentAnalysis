@@ -9,6 +9,9 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.TextMessage;
 
+/**
+ * A producer of json messages used in the web page.
+ */
 @SuppressWarnings("serial")
 public class JsonTupleProducer implements JmsTupleProducer {
   private static final long serialVersionUID = 5616085758921482593L;

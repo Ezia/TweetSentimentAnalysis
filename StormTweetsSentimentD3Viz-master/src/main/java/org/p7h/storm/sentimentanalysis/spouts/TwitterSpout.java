@@ -19,16 +19,22 @@ import java.util.Properties;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Spout which gets tweets from Twitter using OAuth Credentials.
+ * Spout which gets tweets from Twitter using OAuth Credentials and forwards them to its output.
  *
  * @author - Prashanth Babu
  */
 public final class TwitterSpout extends BaseRichSpout {
   private static final Logger LOGGER = LoggerFactory.getLogger(TwitterSpout.class);
   private static final long serialVersionUID = -1590819539847344427L;
-
   private SpoutOutputCollector _outputCollector;
+
+  /**
+   * A list of pending tweets
+   */
   private LinkedBlockingQueue<Status> _queue;
+  /**
+   * Stream of tweets from Twitter
+   */
   private TwitterStream _twitterStream;
 
   @Override

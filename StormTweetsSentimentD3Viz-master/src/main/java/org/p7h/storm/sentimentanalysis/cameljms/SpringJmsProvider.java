@@ -6,6 +6,9 @@ import org.springframework.context.ApplicationContext;
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 
+/**
+ * A producer of spring messages used in the web page.
+ */
 public class SpringJmsProvider implements JmsProvider {
   private static final long serialVersionUID = 2198261240300136509L;
   private ConnectionFactory connectionFactory;

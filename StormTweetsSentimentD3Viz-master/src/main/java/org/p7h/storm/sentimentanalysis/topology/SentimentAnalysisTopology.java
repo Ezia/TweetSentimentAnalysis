@@ -19,13 +19,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 /**
- * Orchestrates the elements and forms a Topology to find the most happiest state by analyzing and processing Tweets.
+ * Orchestrates the elements and forms a Topology to find the happiest state by analyzing and processing Tweets.
  *
  * @author - Prashanth Babu
  */
 public final class SentimentAnalysisTopology {
   private static final Logger LOGGER = LoggerFactory.getLogger(SentimentAnalysisTopology.class);
 
+  /**
+   * Main method
+   * @param args
+   * @throws Exception
+   */
   public static final void main(final String[] args) throws Exception {
     final ApplicationContext applicationContext = new ClassPathXmlApplicationContext("applicationContext.xml");
     final JmsProvider jmsProvider = new SpringJmsProvider(applicationContext, "jmsConnectionFactory",
